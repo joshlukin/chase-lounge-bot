@@ -6,7 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 import time
 
-TEST_EVENT_TITLE = "St. John's Red Storm Men's Basketball vs. Iona"  # Non-Rangers event that can be changed to test functionality when no Rangers games are available
+TEST_EVENT_TITLE = "N/A"  # Non-Rangers event that can be changed to test functionality when no Rangers games are available
 EVENTS_URL = "https://chasegetsyoucloser.com/madison-square-garden/"
 REFRESH_INTERVAL_SECONDS = 10
 CREDENTIALS_PATH = Path("credentials.txt")
