@@ -23,6 +23,7 @@ Python script that uses Selenium to monitor the Chase Lounge reservation portal 
    PASSWORD: your-password
    ```
    > `credentials.txt` is ignored by Git.
+4. Edit constant variables in 
 
 ## Usage
 Run the watcher:

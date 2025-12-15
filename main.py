@@ -6,11 +6,15 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 import time
 
+'''Edit below to set desired parameters'''
 TEST_EVENT_TITLE = "N/A"  # Non-Rangers event that can be changed to test functionality when no Rangers games are available
-EVENTS_URL = "https://chasegetsyoucloser.com/madison-square-garden/"
-REFRESH_INTERVAL_SECONDS = 10
-CREDENTIALS_PATH = Path("credentials.txt")
+REFRESH_INTERVAL_SECONDS = 180
+EVENT_KEYWORD = "New York Rangers"
+
+'''Program constants, not typically changed'''
 PLACEHOLDER_TEXT = "<insert here>"
+EVENTS_URL = "https://chasegetsyoucloser.com/madison-square-garden/"
+CREDENTIALS_PATH = Path("credentials.txt")
 
 
 def load_credentials(path: Path = CREDENTIALS_PATH):
@@ -34,7 +38,6 @@ def load_credentials(path: Path = CREDENTIALS_PATH):
                 password = value
 
     return email, password
-
 
 def scrape_chase(email, password):
     """
@@ -89,8 +92,8 @@ def scrape_chase(email, password):
         while True:
             wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.table")))
             rows = driver.find_elements(By.CSS_SELECTOR, "table.table tbody tr")
-            print(f"Found {len(rows)} events on the page.")
 
+            #Iterate through event table to find events with EVENT_KEYWORD in the title
             for row in rows:
                 try:
                     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", row)
@@ -98,12 +101,11 @@ def scrape_chase(email, password):
 
                     title_elem = row.find_element(By.CSS_SELECTOR, "span[style*='font-weight:bold']")
                     event_title = title_elem.text.strip()
-                    is_rangers_game = "New York Rangers" in event_title
+                    is_correct_event = EVENT_KEYWORD in event_title
                     is_test_event = event_title == TEST_EVENT_TITLE
 
-                    if not (is_rangers_game or is_test_event):
+                    if not (is_correct_event or is_test_event):
                         continue
-                    print(f"Found target event: {event_title}")
 
                     button = row.find_element(By.CSS_SELECTOR, "a.js-reserve")
                     btn_classes = button.get_attribute("class")
@@ -112,22 +114,20 @@ def scrape_chase(email, password):
                     if "btn-primary" in btn_classes and btn_text == "reserve":
                         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
                         time.sleep(0.1)
-                        print("Blue Reserve button found. Clicking to start reservation…")
+                        print("Matching event found with at least one available spot. Attempting reservation…")
                         button.click()
                         if complete_reservation_form(driver):
-                            print("Reservation completed; reloading event list to continue monitoring.")
+                            print("RESERVATION MADE; reloading event list to continue monitoring.")
                             driver.get(EVENTS_URL)
                             break
-                        print("Reservation not completed; continuing to next event.")
+                        print("Not enough spots; continuing to next event.")
                         continue
-                    else:
-                        print("Rangers game found but button not available for reservation")
 
                 except Exception as e:
                     print(f"Error reading row: {e}")
 
             else: #Reached end of list, iterate again after refresh
-                print("No AVAILABLE Rangers events found. Refreshing to check again soon…")
+                print("No AVAILABLE Rangers events found. Refreshing in " + str(REFRESH_INTERVAL_SECONDS) + " seconds to check again soon…")
                 time.sleep(REFRESH_INTERVAL_SECONDS)
                 driver.get(EVENTS_URL)
                 continue
@@ -138,7 +138,6 @@ def scrape_chase(email, password):
     except Exception as e:
         print(f"ERROR: {e}")
         return driver
-
 
 def complete_reservation_form(driver):
     """
@@ -191,7 +190,6 @@ def complete_reservation_form(driver):
         close_modal(modal if "modal" in locals() else None)
         return False
 
-
 def close_modal(modal):
     if not modal:
         return
@@ -202,7 +200,6 @@ def close_modal(modal):
             print("Modal closed.")
     except Exception as close_error:
         print(f"Could not close modal cleanly: {close_error}")
-
 
 def confirm_reservation(driver):
     """
@@ -224,7 +221,6 @@ def confirm_reservation(driver):
     except Exception as e:
         print(f"Unexpected error while confirming reservation: {e}")
         return False
-
 
 if __name__ == "__main__":
     email, password = load_credentials()
